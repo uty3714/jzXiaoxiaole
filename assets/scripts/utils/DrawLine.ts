@@ -21,6 +21,10 @@ export class DrawLine extends Component {
         this.node.on(Input.EventType.TOUCH_START, this.onTouchStartCallback, this);
         this.node.on(Input.EventType.TOUCH_MOVE, this.onTouchMoveCallback, this);
         this.node.on(Input.EventType.TOUCH_END, this.onTouchEndCallback, this);
+        EventManager.Instence.on(DataConstant.EVENT_BEGIN_CONTACT_FAIL, () => {
+            console.log("停止绘制:");
+            this.stopDrawing();
+        }, this)
     }
 
     onTouchStartCallback(event: EventTouch) {
@@ -50,12 +54,21 @@ export class DrawLine extends Component {
     }
 
     onTouchEndCallback(event: EventTouch) {
+        this.stopDrawing();
+    }
+
+    private stopDrawing() {
         this._isDrawing = false;
-        this._grpDrawLine.clear();
-        this.followTouchNode.active = false;
+        if (this._grpDrawLine != null) {
+            this._grpDrawLine.clear();
+        }
+        if (this.followTouchNode != null) {
+            this.followTouchNode.active = false;
+        }
     }
 
     protected onDestroy(): void {
+        EventManager.Instence.off(DataConstant.EVENT_BEGIN_CONTACT_FAIL, () => { }, this);
         // 监听触摸事件
         this.node.off(Input.EventType.TOUCH_START, this.onTouchStartCallback, this);
         this.node.off(Input.EventType.TOUCH_MOVE, this.onTouchMoveCallback, this);

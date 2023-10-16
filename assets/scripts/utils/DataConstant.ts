@@ -9,7 +9,9 @@ export default class DataConstant {
     public static readonly TIMER_TASK_SCHEDULE: number = 2 * 60;
 
     public static readonly SCENE_START: string = "start";
-    public static readonly SCENE_GAME: string = "game";
+    public static readonly SCENE_GAME1: string = "game1";
+    public static readonly SCENE_GAME2: string = "game2";
+    public static readonly SCENE_GAME3: string = "game3";
     public static readonly SCENE_HELP: string = "help";
 
     public static readonly LOCAL_STORAGE_KEY_AUDIO_VOLUME: string = "audioVolume";
@@ -23,6 +25,7 @@ export default class DataConstant {
 
     public static readonly EVENT_TOUCH_LINE_MOVE = "lineMove";
     public static readonly EVENT_TOUCH_BEGIN_CONTACT = "tmBeginContact";
+    public static readonly EVENT_BEGIN_CONTACT_FAIL = "bgContactFail";
 
     public startTimerTask() {
 

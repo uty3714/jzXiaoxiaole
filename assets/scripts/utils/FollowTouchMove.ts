@@ -14,8 +14,10 @@ export class FollowTouchMove extends Component {
         this._touchCollider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactCallback, this);
 
         EventManager.Instence.on(DataConstant.EVENT_TOUCH_LINE_MOVE, (data: Vec3) => {
-            const movePos = data;
-            this.node.setPosition(movePos.x, movePos.y);
+            if (this.node != null) {
+                const movePos = data;
+                this.node.setPosition(movePos.x, movePos.y);
+            }
         }, this);
     }
 
@@ -27,6 +29,7 @@ export class FollowTouchMove extends Component {
 
     protected onDestroy(): void {
         this._touchCollider.off(Contact2DType.BEGIN_CONTACT);
+        EventManager.Instence.off(DataConstant.EVENT_TOUCH_LINE_MOVE, (data: Vec3) => { }, this);
     }
 
 }

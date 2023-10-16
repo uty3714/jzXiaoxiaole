@@ -44,7 +44,7 @@ export class StartGame extends Component {
     }
 
     startGameClick() {
-        director.loadScene(DataConstant.SCENE_GAME);
+        director.loadScene(DataConstant.SCENE_GAME1);
     }
 
 }
