@@ -1,10 +1,10 @@
 import { sys } from "cc";
 import DataConstant from "./DataConstant";
-import Singleton from "./Singleton";
+import Singleton from "../base/Singleton";
 
 export default class PlayerDataUtil extends Singleton {
     static get instance() {
-        return super.GetInstance<PlayerDataUtil>();
+        return super.getInstance<PlayerDataUtil>();
     }
 
     public canGame(): boolean {

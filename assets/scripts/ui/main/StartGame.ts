@@ -1,37 +1,81 @@
-import { _decorator, AnimationClip, AnimationComponent, Component, director, instantiate, Label, Node, Prefab, sys, tween, Vec3 } from 'cc';
+import { _decorator, director, Game, instantiate, Label, Node, Prefab, sys } from 'cc';
 import DataConstant from '../../utils/DataConstant';
-import PlayerDataUtil from '../../utils/PlayerDataUtil';
+import { RenderManager } from '../../base/RenderManager';
+import GameManager from '../../base/GameManager';
+import { PbMainTopNode } from '../PbMainTopNode';
 const { ccclass, property } = _decorator;
 
 @ccclass('StartGame')
-export class StartGame extends Component {
+export class StartGame extends RenderManager {
 
     @property(Prefab) settingsPrefab: Prefab = null!;
-    @property(Label) topIconLabel: Label = null!;
-    @property(Label) topHealthLabel: Label = null!;
+    @property(Node) topCoinsNode: Node = null!;
+    @property(Node) topHealthNode: Node = null!;
+
+    private _topCoinsScript: PbMainTopNode = null;
+    private _topHealthScript: PbMainTopNode = null;
 
     protected onLoad(): void {
+        super.onLoad();
+        console.log("start game onLoad");
+        GameManager.Instence.init();
+        this._topCoinsScript = this.topCoinsNode.getComponent(PbMainTopNode);
+        this._topHealthScript = this.topHealthNode.getComponent(PbMainTopNode);
+        console.log("_topCoinsScript ", this._topCoinsScript, ",_topHealthScript ", this._topHealthScript);
 
-        //判断是否是第一次使用
-        const isFirstUse = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_IS_FIRST_USE);
-        if (null == isFirstUse) {
-            sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_IS_FIRST_USE, 'true');
-            // 第一次使用
-            sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_GAME_COIN, DataConstant.GAME_COIN_COUNT + "");
-            sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_GAME_HEALTH, DataConstant.GAME_HEALTH_COUNT + "");
-        } else {
-            //不是第一次使用,更新本地
-            const iconCount = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_GAME_COIN);
-            DataConstant.GAME_COIN_COUNT = Number.parseInt(iconCount);
-            const healthCount = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_GAME_HEALTH);
-            DataConstant.GAME_HEALTH_COUNT = Number.parseInt(healthCount);
+        this.updateUserCoinsHealth();
+
+        const userHealth = GameManager.Instence.userHealth;
+        if (userHealth < DataConstant.GAME_HEALTH_COUNT) {
+            this.updateUserEnergyTime();
         }
-        this.topIconLabel.string = DataConstant.GAME_COIN_COUNT + "";
-        this.topHealthLabel.string = DataConstant.GAME_HEALTH_COUNT + "";
+    }
 
-        // this.schedule(() => {
-        //     PlayerDataUtil.instance.updateAddHealth();
-        // }, DataConstant.TIMER_TASK_SCHEDULE);
+    private updateUserEnergyTime() {
+        console.log("GameManager.Instence.userEnergyTime ", GameManager.Instence.energyTime);
+        if (GameManager.Instence.energyTime > 0) {
+            const time = Date.now() - GameManager.Instence.energyTime;
+            console.log("差值: " + time);
+            const times = Math.floor((time / 1000) / DataConstant.TIMER_TASK_SCHEDULE);
+            console.log("次数: " + Math.floor(times));
+            if (times > 0) {
+                const currentHealth = GameManager.Instence.addMoreUserHealth(times);
+                if (currentHealth < DataConstant.GAME_HEALTH_COUNT) {
+                    this.startTimerTask();
+                }
+            }
+        } else {
+            if (GameManager.Instence.isTimerStart) {
+                return;
+            }
+            console.log("开始恢复体力计时器...", Date.now());
+            this.startTimerTask();
+        }
+    }
+
+    private startTimerTask() {
+        GameManager.Instence.userEnergyTime = Date.now();
+        GameManager.Instence.isTimerStart = true;
+        this.schedule(() => {
+            GameManager.Instence.addUserHealth();
+        }, DataConstant.TIMER_TASK_SCHEDULE);
+    }
+
+
+    private updateUserCoinsHealth() {
+        if (this._topCoinsScript == null) {
+            this._topCoinsScript = this.topCoinsNode.getComponent(PbMainTopNode);
+        }
+        if (this._topHealthScript == null) {
+            this._topHealthScript = this.topHealthNode.getComponent(PbMainTopNode);
+        }
+
+        const userCoins = GameManager.Instence.userCoins;
+        this._topCoinsScript.updateText(userCoins + "");
+
+        const userHealth = GameManager.Instence.userHealth;
+        this._topHealthScript.updateText(userHealth + "");
+
 
     }
 
@@ -40,11 +84,29 @@ export class StartGame extends Component {
         this.node.addChild(settingsNode);
         settingsNode.active = true;
 
-
     }
 
     startGameClick() {
-        director.loadScene(DataConstant.SCENE_GAME1);
+        if (GameManager.Instence.canGame()) {
+            GameManager.Instence.subUserHealth();
+            if (GameManager.Instence.userHealth < DataConstant.GAME_HEALTH_COUNT) {
+                this.startTimerTask();
+            }
+
+            director.loadScene(DataConstant.SCENE_GAME1);
+        } else {
+            console.log("体力不足");
+
+        }
+    }
+
+    protected onDestroy(): void {
+        super.onDestroy();
+        GameManager.Instence.isTimerStart = false;
+    }
+
+    render(): void {
+        this.updateUserCoinsHealth();
     }
 
 }

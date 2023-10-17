@@ -31,6 +31,8 @@ export class DrawLine extends Component {
         this._isDrawing = true;
         const newV3 = new Vec3(event.getLocation().x, event.getLocation().y, 0);
         const moveToPoint = this._uiParentTransform.convertToNodeSpaceAR(newV3);
+        //发送消息
+        EventManager.Instence.emit(DataConstant.EVENT_TOUCH_LINE_START);
 
         this.followTouchNode.setPosition(moveToPoint.x, moveToPoint.y);
         this.followTouchNode.active = true;
@@ -55,6 +57,7 @@ export class DrawLine extends Component {
 
     onTouchEndCallback(event: EventTouch) {
         this.stopDrawing();
+        EventManager.Instence.emit(DataConstant.EVENT_TOUCH_LINE_END);
     }
 
     private stopDrawing() {

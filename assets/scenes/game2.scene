@@ -1978,6 +1978,12 @@
     "touchNode": {
       "__id__": 33
     },
+    "topCoinsNode": {
+      "__id__": 52
+    },
+    "topHealthNode": {
+      "__id__": 77
+    },
     "gameLevel": 1,
     "_id": "d6MW4WsP1OJKPVTI5jHxpb"
   },

@@ -1,201 +1,227 @@
-import { _decorator, BoxCollider2D, CCFloat, Collider2D, Component, director, error, instantiate, log, Node, Prefab, resources } from 'cc';
-import { PzEnumType } from '../../utils/PzEnumType';
-import { MathUtil } from '../../utils/MathUtil';
+import { _decorator, CCFloat, CCInteger, Collider2D, director, Node } from 'cc';
 import DataConstant from '../../utils/DataConstant';
 import EventManager from '../../utils/EventManager';
+import { RenderManager } from '../../base/RenderManager';
+import GameManager from '../../base/GameManager';
+import { PbMainTopNode } from '../PbMainTopNode';
+import CreatePzUtil from '../../utils/CreatePzUtil';
+import { CountdownNode } from '../CountdownNode';
 const { ccclass, property } = _decorator;
 
 @ccclass('Game')
-export class Game extends Component {
-
-    private static readonly bandPzAddParentNode: string = "ParentNode";
+export class Game extends RenderManager {
 
     @property(Node) gameBanNode: Node = null!;
     @property(Node) touchNode: Node = null!;
-    @property(CCFloat) gameLevel: number = 1;
+    @property(Node) topCoinsNode: Node = null!;
+    @property(Node) topHealthNode: Node = null!;
+    @property(Node) countDownNode: Node = null!;
 
+    @property(CCInteger) gameLevel: number = 1;
+
+    private _countDownLabel: CountdownNode = null;
     private _banMiddleNode: Node = null;
     private _banRightNode: Node = null;
     private _banLeftNode: Node = null;
 
-    //瓶子所有的类型
-    private readonly pzArray = [101, 102, 103, 104, 105, 106, 201, 202, 203, 204, 205, 206, 301, 302, 303, 304];
+    private _topCoinsScript: PbMainTopNode = null;
+    private _topHealthScript: PbMainTopNode = null;
 
+    //瓶子所有的类型
+    private createPzTotal: number = 0;
     //碰撞的对象
     private firstColliderObject: number = -1;
-    private colliderObject: number[] = [];
+    private colliderObject: Node[] = [];
+    private colliderObjectUUID: string[] = [];
+
+    render(): void {
+        console.log("game render", this);
+        this.updateUserCoinHealth();
+    }
+
+    private updateUserCoinHealth() {
+        const userCoins = GameManager.Instence.userCoins;
+        const userHealth = GameManager.Instence.userHealth;
+        this._topCoinsScript.updateText(userCoins + "");
+        this._topHealthScript.updateText(userHealth + "");
+    }
 
     protected onLoad(): void {
+        super.onLoad();
         console.log("this.gameBanNode", this.gameBanNode);
+
+        this._topCoinsScript = this.topCoinsNode.getComponent(PbMainTopNode);
+        this._topHealthScript = this.topHealthNode.getComponent(PbMainTopNode);
+        this._countDownLabel = this.countDownNode.getChildByName("ParentNode").
+            getChildByName("CountDownLabel").getComponent(CountdownNode);
+        this.updateUserCoinHealth();
 
         this._banMiddleNode = this.gameBanNode.getChildByName('pbBanMiddleNode');
         this._banLeftNode = this.gameBanNode.getChildByName('pbBanLeftNode');
         this._banRightNode = this.gameBanNode.getChildByName('pbBanRightNode');
-        this.initPz();
+
+        //生成随机瓶子
+        this.initPz(false);
 
         //
         this.registerColliderCallback();
+        this.registerDrawLineTouchStartCallback();
+        this.registerDrawLineTouchEndCallback();
+        //监听道具使用
+        this.registerGamePropsUseCallback();
+
+
 
     }
 
+    gameOver() {
+        console.log("游戏结束");
+    }
+
+    protected onDestroy(): void {
+        super.onDestroy();
+        EventManager.Instence.off(DataConstant.EVENT_GAME_PROPS_USE, (data: number) => { }, this);
+        EventManager.Instence.off(DataConstant.EVENT_TOUCH_LINE_END, () => { }, this);
+        EventManager.Instence.off(DataConstant.EVENT_TOUCH_LINE_START, () => { }, this);
+        EventManager.Instence.off(DataConstant.EVENT_TOUCH_BEGIN_CONTACT, (otherCollider: Collider2D) => { }, this);
+
+    }
+
+    private registerGamePropsUseCallback() {
+        EventManager.Instence.on(DataConstant.EVENT_GAME_PROPS_USE, (propsType: number) => {
+            console.log("触发了道具使用事件", propsType);
+            switch (propsType) {
+                case 1:
+                    //使用了提示
+                    break;
+                case 2:
+                    //使用了随机消除
+
+                    break;
+                case 3:
+                    //使用了更换内容
+                    this.initPz(true);
+                    break;
+                case 4:
+                    //使用了增加时间
+                    this._countDownLabel.addTime(30);
+                    break;
+                default:
+                    break;
+            }
+        }, this);
+    }
+
+    private registerDrawLineTouchEndCallback() {
+        EventManager.Instence.on(DataConstant.EVENT_TOUCH_LINE_END, () => {
+            console.log("触发了结束事件");
+            this.destroyPzObject();
+        });
+    }
+
+    //重置按下数据
+    private registerDrawLineTouchStartCallback() {
+        EventManager.Instence.on(DataConstant.EVENT_TOUCH_LINE_START, () => {
+            this.createPzTotal = CreatePzUtil.Instence.createPzTotalCount;
+            console.log("总共还有: " + this.createPzTotal + "个瓶子");
+            this.resetData();
+            console.log("总共还有: ", this.colliderObject, "个碰撞缓存");
+        }, this);
+    }
+
+    //监听碰撞
     private registerColliderCallback() {
         EventManager.Instence.on(DataConstant.EVENT_TOUCH_BEGIN_CONTACT,
             (otherCollider: Collider2D) => {
-                console.log("game检测到碰撞: ", otherCollider.node.name, otherCollider.tag);
+                console.log("game检测到碰撞: ", otherCollider.node.name, otherCollider.tag, otherCollider.node.uuid);
                 if (-1 == this.firstColliderObject) {
-                    //记录
-                    this.firstColliderObject = otherCollider.tag;
-                    //添加记录
-                    if (this.colliderObject != null) {
-                        this.colliderObject.push(otherCollider.tag);
-                    }
+                    //记录 
+                    console.log("第一次碰撞");
 
+                    this.firstColliderObject = otherCollider.tag;
+                    this.recordTouchColliderNode(otherCollider);
                 } else {
-                    if (this.firstColliderObject == otherCollider.tag) {
-                        if (this.colliderObject != null) {
-                            this.colliderObject.push(otherCollider.tag);
+                    if (this.colliderObjectUUID != null) {
+                        const hasCollider = this.colliderObjectUUID.find((item) => {
+                            return item == otherCollider.node.uuid;
+                        })
+                        if (hasCollider) {
+                            console.log("找到了: 已经碰撞过了", hasCollider);
+                        } else {
+                            if (this.firstColliderObject == otherCollider.tag) {
+                                this.recordTouchColliderNode(otherCollider);
+                            } else {
+                                console.log("碰撞失败");
+                                this.resetData();
+                                EventManager.Instence.emit(DataConstant.EVENT_BEGIN_CONTACT_FAIL);
+                            }
                         }
                     } else {
-                        this.resetData();
-                        EventManager.Instence.emit(DataConstant.EVENT_BEGIN_CONTACT_FAIL);
+                        console.log(" this.colliderObjectUUID = null");
+
                     }
                 }
             }, this);
     }
 
+    private destroyPzObject() {
+        const len = this.colliderObject.length;
+        if (len > 1) {
+            for (let i = 0; i < len; i++) {
+                this.colliderObject[i].destroy();
+            }
+            this.createPzTotal -= len;
+            CreatePzUtil.Instence.resetCreatePzTotal = this.createPzTotal;
+            console.log("当前还剩: " + this.createPzTotal + "个瓶子");
+            if (this.createPzTotal <= 0) {
+                this.createPzTotal = 0;
+                //游戏结束
+                this.gameOver();
+            }
+        }
+    }
+
+    private recordTouchColliderNode(otherCollider: Collider2D) {
+        //添加记录
+        if (this.colliderObject != null) {
+            this.colliderObject.push(otherCollider.node);
+        }
+        if (this.colliderObjectUUID != null) {
+            this.colliderObjectUUID.push(otherCollider.node.uuid);
+        }
+    }
+
     private resetData() {
         this.firstColliderObject = -1;
-        if (this.colliderObject == null) {
-            this.colliderObject = [];
-        } else {
-
-        }
-
+        this.colliderObject = [];
+        this.colliderObject.length = 0;
+        this.colliderObjectUUID = [];
+        this.colliderObjectUUID.length = 0;
     }
 
-    private initPz() {
+
+
+    private initPz(refresh: boolean = false) {
+        if (!this._countDownLabel.node.active) {
+            this._countDownLabel.node.active = true;
+        }
+        if (!refresh) {
+            this._countDownLabel.restart();
+        }
+        EventManager.Instence.emit(DataConstant.EVENT_RESET_GAME_NODE);
+        this.createPzTotal = 0;
+        CreatePzUtil.Instence.resetCreatePzTotal = 0;
         this.resetData();
         if (1 == this.gameLevel) {
-            //生成3个
-            this.createMiddlePzData(this._banMiddleNode);
-            this.createMiddlePzData(this._banLeftNode);
-            this.createMiddlePzData(this._banRightNode);
-        }
-    }
-
-    /**
-     * 创建中间板子上的瓶子数据
-     */
-    private createMiddlePzData(banNode: Node) {
-        const banCreateMaxPzNum = MathUtil.randomBanPzNum(3);
-        console.log("当前的板子", banNode.name, "应该生成", banCreateMaxPzNum, "个瓶子");
-        const bandAddPzParentNode = banNode.getChildByName(Game.bandPzAddParentNode);
-        if (3 == banCreateMaxPzNum) {
-            //生成3个预制体
-            this.createBanMiddlePz(bandAddPzParentNode);
-            this.createBanLeftPz(bandAddPzParentNode);
-            this.createBanRightPz(bandAddPzParentNode);
-        } else if (2 == banCreateMaxPzNum) {
-            //生成2个预制体
-            this.createBan2PzData(bandAddPzParentNode);
-        } else {
-            //生成1个预制体
-            this.createBan1PzData(bandAddPzParentNode);
+            const pzArray = [101, 102];
+            //生成3个随机
+            CreatePzUtil.Instence.createRandomPzData(this._banMiddleNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banLeftNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banRightNode, pzArray);
         }
     }
 
 
-
-    /**
-     * 随机1个位置添加瓶子
-     * @param addPzNode addNode
-     */
-    private createBan1PzData(addPzNode: Node) {
-        const createIndex = MathUtil.randomBanPzNum(3);
-        if (1 == createIndex) {
-            //创建中间的瓶子
-            this.createBanMiddlePz(addPzNode);
-        } else if (2 == createIndex) {
-            this.createBanLeftPz(addPzNode);
-        } else {
-            this.createBanRightPz(addPzNode);
-        }
-    }
-
-    /**
-     * 随机2个位置添加瓶子
-     * @param addPzNode addNode
-     */
-    private createBan2PzData(addPzNode: Node) {
-        const vacancyIndex = MathUtil.randomBanPzNum(3);
-        if (1 == vacancyIndex) {
-            //创建左 右
-            this.createBanLeftPz(addPzNode);
-            this.createBanRightPz(addPzNode);
-        } else if (2 == vacancyIndex) {
-            //创建中间, 右
-            this.createBanMiddlePz(addPzNode);
-            this.createBanRightPz(addPzNode);
-        } else {
-            //创建中间, 左
-            this.createBanMiddlePz(addPzNode);
-            this.createBanLeftPz(addPzNode);
-        }
-    }
-
-    /**
-     * 创建板子中间上的瓶子
-     */
-    private createBanMiddlePz(addPzNode: Node) {
-        //实例化一个
-        const middleNode = addPzNode.getChildByName("Middle");
-        const randomIndex = Math.floor(Math.random() * this.pzArray.length);
-        const randomPzType = this.pzArray[randomIndex];
-        const pzPrefabName = "prefabs/game/pb" + PzEnumType[randomPzType];
-        resources.load(pzPrefabName, Prefab, (error, preafab) => {
-            if (error) {
-                return;
-            }
-            const pzNode = instantiate(preafab);
-            middleNode.addChild(pzNode);
-        });
-    }
-
-    /**
-     * 创建板子左边上的瓶子
-     */
-    private createBanLeftPz(addPzNode: Node) {
-        //实例化一个
-        const leftNode = addPzNode.getChildByName("Left");
-        const randomIndex = Math.floor(Math.random() * this.pzArray.length);
-        const randomPzType = this.pzArray[randomIndex];
-        const pzPrefabName = "prefabs/game/pb" + PzEnumType[randomPzType];
-        resources.load(pzPrefabName, Prefab, (error, preafab) => {
-            if (error) {
-                return;
-            }
-            const pzNode = instantiate(preafab);
-            leftNode.addChild(pzNode);
-        });
-    }
-
-    /**
-    * 创建板子右边上的瓶子
-    */
-    private createBanRightPz(addPzNode: Node) {
-        //实例化一个
-        const rightNode = addPzNode.getChildByName("Right");
-        const randomIndex = Math.floor(Math.random() * this.pzArray.length);
-        const randomPzType = this.pzArray[randomIndex];
-        const pzPrefabName = "prefabs/game/pb" + PzEnumType[randomPzType];
-        resources.load(pzPrefabName, Prefab, (error, preafab) => {
-            if (error) {
-                return;
-            }
-            const pzNode = instantiate(preafab);
-            rightNode.addChild(pzNode);
-        });
-    }
 
 
     backClick() {

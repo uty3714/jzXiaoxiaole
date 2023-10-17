@@ -6,7 +6,7 @@ export default class DataConstant {
     public static GAME_COIN_COUNT = 0;
 
     // public static TIMER_TASK_SCHEDULE: number = 5 * 60;
-    public static readonly TIMER_TASK_SCHEDULE: number = 2 * 60;
+    public static readonly TIMER_TASK_SCHEDULE: number = 1 * 60;
 
     public static readonly SCENE_START: string = "start";
     public static readonly SCENE_GAME1: string = "game1";
@@ -26,6 +26,12 @@ export default class DataConstant {
     public static readonly EVENT_TOUCH_LINE_MOVE = "lineMove";
     public static readonly EVENT_TOUCH_BEGIN_CONTACT = "tmBeginContact";
     public static readonly EVENT_BEGIN_CONTACT_FAIL = "bgContactFail";
+    public static readonly EVENT_UI_RENDER = "renderUI";
+    public static readonly EVENT_TOUCH_LINE_START = "touchLineStart";
+    public static readonly EVENT_TOUCH_LINE_END = "touchLineEnd";
+    public static readonly EVENT_GAME_PROPS_USE = "useProps";
+
+    public static readonly EVENT_RESET_GAME_NODE = "resetGameNode";
 
     public startTimerTask() {
 
