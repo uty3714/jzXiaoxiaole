@@ -1,5 +1,6 @@
 import { _decorator, Animation, AnimationClip, Button, Component, director, Label, Node, ProgressBar, Slider, Sprite, sys } from 'cc';
 import DataConstant from '../../utils/DataConstant';
+import EventManager from '../../utils/EventManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('SettingsManager')
@@ -29,12 +30,12 @@ export class SettingsManager extends Component {
         console.log("audio: " + initAudioValue + ", sound = " + initSoundValue);
 
         if (null == initAudioValue) {
-            this._audioValue = 0.5;
+            this._audioValue = 1;
         } else {
             this._audioValue = parseFloat(initAudioValue);
         }
         if (null == initSoundValue) {
-            this._soundValue = 0.5;
+            this._soundValue = 1;
         } else {
             this._soundValue = parseFloat(initSoundValue);
         }
@@ -71,12 +72,16 @@ export class SettingsManager extends Component {
         this._audioValue = slider.progress;
         this.audioProgressBar.progress = this._audioValue;
         sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_AUDIO_VOLUME, slider.progress.toString());
+        console.log("设置音乐:" + this._audioValue);
+        EventManager.Instence.emit(DataConstant.EVENT_AUDIO_VALUE, this._audioValue);
     }
 
     private onSoundSliderChange(slide: Slider) {
         this._soundValue = slide.progress;
         this.SoundProgressBar.progress = this._soundValue;
         sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_SOUND_VOLUME, slide.progress.toString());
+
+
     }
 }
 

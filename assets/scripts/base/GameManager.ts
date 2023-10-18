@@ -28,22 +28,19 @@ export default class GameManager extends Singleton {
 
     init() {
         const localHealth = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_GAME_HEALTH);
-        console.log("localHealth = " + localHealth);
 
         if (localHealth == undefined || localHealth == null) {
             this.saveNewHealth();
         } else {
             let saveData = JSON.parse(localHealth);
             const isNewDay = util.isNewDay(saveData.day);
-            console.log("isNewDay:", "today", isNewDay);
             if (isNewDay) {
-                console.log("是新的一天");
                 this.saveNewHealth();
             } else {
-                console.log("不是新的一天，用老的数据");
                 this._userHealth = saveData.health;
             }
         }
+
 
         //取金币
         const localCoins = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_GAME_COIN);
@@ -53,6 +50,32 @@ export default class GameManager extends Singleton {
         } else {
             this._userCoins = Number(localCoins);
         }
+
+        //取道具
+        let props1Str = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_1);
+        if (props1Str == undefined || props1Str == null || props1Str == "") {
+            props1Str = "0";
+        }
+        this._propsTips = Number(props1Str);
+
+        let props2Str = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_2);
+        if (props2Str == undefined || props2Str == null || props2Str == "") {
+            props2Str = "0";
+        }
+        this._propDestroyNode = Number(props2Str);
+
+        let props3Str = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_3);
+        if (props3Str == undefined || props3Str == null || props3Str == "") {
+            props3Str = "0";
+        }
+        this._propRandomNode = Number(props3Str);
+
+        let props4Str = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_4);
+        if (props4Str == undefined || props4Str == null || props4Str == "") {
+            props4Str = "0";
+        }
+        this._propAddTime = Number(props4Str);
+
     }
 
     private saveNewHealth() {
@@ -143,21 +166,25 @@ export default class GameManager extends Singleton {
     addMorePropTips(value: number) {
         this._propsTips += value;
         this.render();
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_1, this._propsTips.toString());
     }
 
     addMorePropDestroyNode(value: number) {
         this._propDestroyNode += value;
         this.render();
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_2, this._propDestroyNode.toString());
     }
 
     addMorePropRandomNode(value: number) {
         this._propRandomNode += value;
         this.render();
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_3, this._propRandomNode.toString());
     }
 
     addMorePropAddTime(value: number) {
         this._propAddTime += value;
         this.render();
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_4, this._propAddTime.toString());
     }
 
     subMorePropTips(value: number) {
@@ -166,6 +193,7 @@ export default class GameManager extends Singleton {
             this._propsTips = 0;
         }
         this.render();
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_1, this._propsTips.toString());
     }
 
     subMorePropDestroyNode(value: number) {
@@ -174,6 +202,7 @@ export default class GameManager extends Singleton {
             this._propDestroyNode = 0;
         }
         this.render();
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_2, this._propDestroyNode.toString());
     }
 
     subMorePropRandomNode(value: number) {
@@ -182,6 +211,7 @@ export default class GameManager extends Singleton {
             this._propRandomNode = 0;
         }
         this.render();
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_3, this._propRandomNode.toString());
     }
 
     subMorePropAddTime(value: number) {
@@ -190,8 +220,8 @@ export default class GameManager extends Singleton {
             this._propAddTime = 0;
         }
         this.render();
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_USER_PROPS_4, this._propAddTime.toString());
     }
-
 
 
     canGame(): boolean {
@@ -242,9 +272,17 @@ export default class GameManager extends Singleton {
         sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_GAME_COIN, this._userCoins.toString());
     }
 
-    render() {
-        console.log("game manager render-->");
 
+    getCurrentAudioValue(): number {
+        let audioValueStr = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_AUDIO_VOLUME);
+        if (audioValueStr == undefined || audioValueStr == null || audioValueStr == "") {
+            audioValueStr = "1";
+        }
+        const audioValue = parseFloat(audioValueStr);
+        return audioValue;
+    }
+
+    render() {
         EventManager.Instence.emit(DataConstant.EVENT_UI_RENDER);
     }
 

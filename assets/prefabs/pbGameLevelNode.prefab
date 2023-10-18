@@ -26,10 +26,13 @@
     "_components": [
       {
         "__id__": 10
+      },
+      {
+        "__id__": 12
       }
     ],
     "_prefab": {
-      "__id__": 12
+      "__id__": 14
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -63,7 +66,7 @@
   {
     "__type__": "cc.Node",
     "_name": "ParentNode",
-    "_objFlags": 0,
+    "_objFlags": 512,
     "__editorExtras__": {},
     "_parent": {
       "__id__": 1
@@ -110,7 +113,7 @@
   {
     "__type__": "cc.Node",
     "_name": "game_level1",
-    "_objFlags": 0,
+    "_objFlags": 512,
     "__editorExtras__": {},
     "_parent": {
       "__id__": 2
@@ -283,6 +286,28 @@
   {
     "__type__": "cc.CompPrefabInfo",
     "fileId": "c9eAzOn79Dx6adGEAFJYtv"
+  },
+  {
+    "__type__": "5e762opX3dPLqw7xfZFPzJ0",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 13
+    },
+    "sprite": {
+      "__id__": 6
+    },
+    "levelNum": 1,
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "16wEA9GsZPmp8XRL+sxAfp"
   },
   {
     "__type__": "cc.PrefabInfo",

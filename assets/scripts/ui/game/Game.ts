@@ -1,4 +1,4 @@
-import { _decorator, CCInteger, Collider2D, director, Node } from 'cc';
+import { _decorator, AudioClip, AudioSource, CCInteger, Collider2D, director, Node, resources } from 'cc';
 import DataConstant from '../../utils/DataConstant';
 import EventManager from '../../utils/EventManager';
 import { RenderManager } from '../../base/RenderManager';
@@ -19,13 +19,23 @@ export class Game extends RenderManager {
     @property(Node) topCoinsNode: Node = null!;
     @property(Node) topHealthNode: Node = null!;
     @property(Node) countDownNode: Node = null!;
-
+    @property(AudioSource) audioSource: AudioSource = null!;
     @property(CCInteger) gameLevel: number = 1;
 
     private _countDownLabel: CountdownNode = null;
+    //第一关
     private _banMiddleNode: Node = null;
     private _banRightNode: Node = null;
     private _banLeftNode: Node = null;
+    //第二关
+    private _banMiddleCenterNode: Node = null;
+    private _banRightCenterNode: Node = null;
+    private _banLeftCenterNode: Node = null;
+    //第三关
+    private _banMiddleBottomNode: Node = null;
+    private _banRightBottomNode: Node = null;
+    private _banLeftBottomNode: Node = null;
+
 
     private _topCoinsScript: PbMainTopNode = null;
     private _topHealthScript: PbMainTopNode = null;
@@ -57,6 +67,10 @@ export class Game extends RenderManager {
     protected onLoad(): void {
         super.onLoad();
         console.log("this.gameBanNode", this.gameBanNode);
+        //声音
+        this.audioSource = this.node.getComponent(AudioSource);
+        this.audioSource.loop = true;
+        this.audioSource.volume = GameManager.Instence.getCurrentAudioValue();
 
         this._topCoinsScript = this.topCoinsNode.getComponent(PbMainTopNode);
         this._topHealthScript = this.topHealthNode.getComponent(PbMainTopNode);
@@ -67,9 +81,19 @@ export class Game extends RenderManager {
         this._banMiddleNode = this.gameBanNode.getChildByName('pbBanMiddleNode');
         this._banLeftNode = this.gameBanNode.getChildByName('pbBanLeftNode');
         this._banRightNode = this.gameBanNode.getChildByName('pbBanRightNode');
-
-        console.log("onLoad data: ", this._countDownLabel, this.gamePanel, this.gameRewardPanel, this.gameLevel);
-
+        if (this.gameLevel == 2) {
+            this._banMiddleCenterNode = this.gameBanNode.getChildByName('pbBanMiddleCenterNode');
+            this._banLeftCenterNode = this.gameBanNode.getChildByName('pbBanLeftCenterNode');
+            this._banRightCenterNode = this.gameBanNode.getChildByName('pbBanRightCenterNode');
+        }
+        if (this.gameLevel == 3) {
+            this._banMiddleCenterNode = this.gameBanNode.getChildByName('pbBanMiddleCenterNode');
+            this._banLeftCenterNode = this.gameBanNode.getChildByName('pbBanLeftCenterNode');
+            this._banRightCenterNode = this.gameBanNode.getChildByName('pbBanRightCenterNode');
+            this._banMiddleBottomNode = this.gameBanNode.getChildByName('pbBanMiddleBottomNode');
+            this._banLeftBottomNode = this.gameBanNode.getChildByName('pbBanLeftBottomNode');
+            this._banRightBottomNode = this.gameBanNode.getChildByName('pbBanRightBottomNode');
+        }
         //生成随机瓶子
         this.initPz(false);
 
@@ -83,6 +107,19 @@ export class Game extends RenderManager {
 
     gameOver() {
         console.log("游戏结束");
+        this.audioSource.stop();
+
+        resources.load("audio/win", AudioClip, (err, clip) => {
+            if (err) {
+                return;
+            }
+            console.log("load clip: 成功");
+            this.audioSource.clip = clip;
+            this.audioSource.loop = false;
+            this.audioSource.play();
+        });
+        //this.audioSource.clip = 
+
         if (this.gamePanel != null) {
             this.gamePanel.active = false;
         }
@@ -251,6 +288,27 @@ export class Game extends RenderManager {
             CreatePzUtil.Instence.createRandomPzData(this._banMiddleNode, pzArray);
             CreatePzUtil.Instence.createRandomPzData(this._banLeftNode, pzArray);
             CreatePzUtil.Instence.createRandomPzData(this._banRightNode, pzArray);
+        } else if (2 == this.gameLevel) {
+            const pzArray = [101, 102, 201, 202, 301];
+            //生成6个随机
+            CreatePzUtil.Instence.createRandomPzData(this._banMiddleNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banLeftNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banRightNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banMiddleCenterNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banLeftCenterNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banRightCenterNode, pzArray);
+        } else if (3 == this.gameLevel) {
+            const pzArray = [101, 102, 103, 201, 202, 203, 301, 302];
+            //生成9个随机
+            CreatePzUtil.Instence.createRandomPzData(this._banMiddleNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banLeftNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banRightNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banMiddleCenterNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banLeftCenterNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banRightCenterNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banMiddleBottomNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banLeftBottomNode, pzArray);
+            CreatePzUtil.Instence.createRandomPzData(this._banRightBottomNode, pzArray);
         }
     }
 

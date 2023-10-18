@@ -20,6 +20,11 @@ export default class DataConstant {
     public static readonly LOCAL_STORAGE_KEY_GAME_HEALTH: string = "gameHealth";
     public static readonly LOCAL_STORAGE_KEY_GAME_COIN: string = "gameCoin";
     public static readonly LOCAL_STORAGE_KEY_USER_PASS_LEVEL: string = "userPassLevel";
+    //道具
+    public static readonly LOCAL_STORAGE_KEY_USER_PROPS_1: string = "userProps1";
+    public static readonly LOCAL_STORAGE_KEY_USER_PROPS_2: string = "userProps2";
+    public static readonly LOCAL_STORAGE_KEY_USER_PROPS_3: string = "userProps3";
+    public static readonly LOCAL_STORAGE_KEY_USER_PROPS_4: string = "userProps4";
 
 
     //第一次使用
@@ -34,6 +39,7 @@ export default class DataConstant {
     public static readonly EVENT_GAME_PROPS_USE = "useProps";
 
     public static readonly EVENT_RESET_GAME_NODE = "resetGameNode";
+    public static readonly EVENT_AUDIO_VALUE = "audioValue";
 
     public startTimerTask() {
 
