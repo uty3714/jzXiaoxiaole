@@ -1,4 +1,4 @@
-import { _decorator, CCFloat, CCInteger, Collider2D, director, Node } from 'cc';
+import { _decorator, CCInteger, Collider2D, director, Node } from 'cc';
 import DataConstant from '../../utils/DataConstant';
 import EventManager from '../../utils/EventManager';
 import { RenderManager } from '../../base/RenderManager';
@@ -10,6 +10,9 @@ const { ccclass, property } = _decorator;
 
 @ccclass('Game')
 export class Game extends RenderManager {
+
+    @property(Node) gamePanel: Node = null!;
+    @property(Node) gameRewardPanel: Node = null!;
 
     @property(Node) gameBanNode: Node = null!;
     @property(Node) touchNode: Node = null!;
@@ -69,17 +72,22 @@ export class Game extends RenderManager {
         this.registerDrawLineTouchEndCallback();
         //监听道具使用
         this.registerGamePropsUseCallback();
-
-
-
     }
 
     gameOver() {
         console.log("游戏结束");
+        if (this.gamePanel != null) {
+            this.gamePanel.active = false;
+        }
+        if (this.gameRewardPanel != null) {
+            this.gameRewardPanel.active = true;
+        }
     }
 
     protected onDestroy(): void {
         super.onDestroy();
+        console.log("game ---> destroy");
+
         EventManager.Instence.off(DataConstant.EVENT_GAME_PROPS_USE, (data: number) => { }, this);
         EventManager.Instence.off(DataConstant.EVENT_TOUCH_LINE_END, () => { }, this);
         EventManager.Instence.off(DataConstant.EVENT_TOUCH_LINE_START, () => { }, this);
@@ -200,14 +208,17 @@ export class Game extends RenderManager {
     }
 
 
-
     private initPz(refresh: boolean = false) {
-        if (!this._countDownLabel.node.active) {
-            this._countDownLabel.node.active = true;
+        if (this._countDownLabel != null) {
+            if (!this._countDownLabel.node.active) {
+                this._countDownLabel.node.active = true;
+            }
         }
         if (!refresh) {
             this._countDownLabel.restart();
         }
+        this.gamePanel.active = true;
+        this.gameRewardPanel.active = false;
         EventManager.Instence.emit(DataConstant.EVENT_RESET_GAME_NODE);
         this.createPzTotal = 0;
         CreatePzUtil.Instence.resetCreatePzTotal = 0;

@@ -19,6 +19,8 @@ export default class DataConstant {
 
     public static readonly LOCAL_STORAGE_KEY_GAME_HEALTH: string = "gameHealth";
     public static readonly LOCAL_STORAGE_KEY_GAME_COIN: string = "gameCoin";
+    public static readonly LOCAL_STORAGE_KEY_USER_PASS_LEVEL: string = "userPassLevel";
+
 
     //第一次使用
     public static readonly LOCAL_STORAGE_KEY_IS_FIRST_USE: string = "firstUse";
