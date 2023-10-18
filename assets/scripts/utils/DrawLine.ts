@@ -13,6 +13,8 @@ export class DrawLine extends Component {
     private _uiParentTransform: UITransform = null!;
     private _recordPos: Vec3 = Vec3.ZERO;
 
+    private _callback: Function = null!;
+
     onLoad() {
         this.followTouchNode.active = false;
         this._grpDrawLine = this.getComponent(Graphics);
@@ -21,11 +23,17 @@ export class DrawLine extends Component {
         this.node.on(Input.EventType.TOUCH_START, this.onTouchStartCallback, this);
         this.node.on(Input.EventType.TOUCH_MOVE, this.onTouchMoveCallback, this);
         this.node.on(Input.EventType.TOUCH_END, this.onTouchEndCallback, this);
-        EventManager.Instence.on(DataConstant.EVENT_BEGIN_CONTACT_FAIL, () => {
+
+        this._callback = () => {
             console.log("停止绘制:");
             this.stopDrawing();
-        }, this)
+        }
+
+        EventManager.Instence.on(DataConstant.EVENT_BEGIN_CONTACT_FAIL, this._callback, this)
     }
+
+
+
 
     onTouchStartCallback(event: EventTouch) {
         this._isDrawing = true;
@@ -71,7 +79,7 @@ export class DrawLine extends Component {
     }
 
     protected onDestroy(): void {
-        EventManager.Instence.off(DataConstant.EVENT_BEGIN_CONTACT_FAIL, () => { }, this);
+        EventManager.Instence.off(DataConstant.EVENT_BEGIN_CONTACT_FAIL, this._callback, this);
         // 监听触摸事件
         this.node.off(Input.EventType.TOUCH_START, this.onTouchStartCallback, this);
         this.node.off(Input.EventType.TOUCH_MOVE, this.onTouchMoveCallback, this);

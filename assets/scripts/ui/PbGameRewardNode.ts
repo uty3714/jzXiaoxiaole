@@ -75,6 +75,8 @@ export class PbGameRewardNode extends Component {
             default:
                 break;
         }
+        //增加金币
+        GameManager.Instence.addUserCoins(MathUtil.randomBanPzNum(6));
         director.loadScene(DataConstant.SCENE_START);
 
     }

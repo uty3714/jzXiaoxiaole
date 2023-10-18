@@ -8,17 +8,20 @@ export class FollowTouchMove extends Component {
 
     private _touchCollider: Collider2D = null!;
 
+    private _callback: Function = null;
+
     onLoad() {
         //拿到2d collider
         this._touchCollider = this.node.getComponent(BoxCollider2D);
         this._touchCollider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContactCallback, this);
 
-        EventManager.Instence.on(DataConstant.EVENT_TOUCH_LINE_MOVE, (data: Vec3) => {
+        this._callback = (data: Vec3) => {
             if (this.node != null) {
                 const movePos = data;
                 this.node.setPosition(movePos.x, movePos.y);
             }
-        }, this);
+        };
+        EventManager.Instence.on(DataConstant.EVENT_TOUCH_LINE_MOVE, this._callback, this);
     }
 
     onBeginContactCallback(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null) {
@@ -29,7 +32,7 @@ export class FollowTouchMove extends Component {
 
     protected onDestroy(): void {
         this._touchCollider.off(Contact2DType.BEGIN_CONTACT);
-        EventManager.Instence.off(DataConstant.EVENT_TOUCH_LINE_MOVE, (data: Vec3) => { }, this);
+        EventManager.Instence.off(DataConstant.EVENT_TOUCH_LINE_MOVE, this._callback, this);
     }
 
 }

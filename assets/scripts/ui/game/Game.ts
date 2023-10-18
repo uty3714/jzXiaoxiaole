@@ -37,6 +37,11 @@ export class Game extends RenderManager {
     private colliderObject: Node[] = [];
     private colliderObjectUUID: string[] = [];
 
+    private _callbackUseProps: Function = null;
+    private _calbackTouchLineEnd: Function = null;
+    private _callbackTouchLineStart: Function = null;
+    private _callbackTouchBeginContact: Function = null;
+
     render(): void {
         console.log("game render", this);
         this.updateUserCoinHealth();
@@ -63,6 +68,8 @@ export class Game extends RenderManager {
         this._banLeftNode = this.gameBanNode.getChildByName('pbBanLeftNode');
         this._banRightNode = this.gameBanNode.getChildByName('pbBanRightNode');
 
+        console.log("onLoad data: ", this._countDownLabel, this.gamePanel, this.gameRewardPanel, this.gameLevel);
+
         //生成随机瓶子
         this.initPz(false);
 
@@ -88,15 +95,16 @@ export class Game extends RenderManager {
         super.onDestroy();
         console.log("game ---> destroy");
 
-        EventManager.Instence.off(DataConstant.EVENT_GAME_PROPS_USE, (data: number) => { }, this);
-        EventManager.Instence.off(DataConstant.EVENT_TOUCH_LINE_END, () => { }, this);
-        EventManager.Instence.off(DataConstant.EVENT_TOUCH_LINE_START, () => { }, this);
-        EventManager.Instence.off(DataConstant.EVENT_TOUCH_BEGIN_CONTACT, (otherCollider: Collider2D) => { }, this);
+        EventManager.Instence.off(DataConstant.EVENT_GAME_PROPS_USE, this._callbackUseProps, this);
+        EventManager.Instence.off(DataConstant.EVENT_TOUCH_LINE_END, this._calbackTouchLineEnd, this);
+        EventManager.Instence.off(DataConstant.EVENT_TOUCH_LINE_START, this._callbackTouchLineStart, this);
+        EventManager.Instence.off(DataConstant.EVENT_TOUCH_BEGIN_CONTACT, this._callbackTouchBeginContact, this);
 
     }
 
     private registerGamePropsUseCallback() {
-        EventManager.Instence.on(DataConstant.EVENT_GAME_PROPS_USE, (propsType: number) => {
+
+        this._callbackUseProps = (propsType: number) => {
             console.log("触发了道具使用事件", propsType);
             switch (propsType) {
                 case 1:
@@ -104,72 +112,80 @@ export class Game extends RenderManager {
                     break;
                 case 2:
                     //使用了随机消除
-
                     break;
                 case 3:
                     //使用了更换内容
+                    console.log("callback:", this);
                     this.initPz(true);
                     break;
                 case 4:
                     //使用了增加时间
-                    this._countDownLabel.addTime(30);
+                    if (this._countDownLabel != null) {
+                        this._countDownLabel.addTime(30);
+                    }
                     break;
                 default:
                     break;
             }
-        }, this);
+        };
+
+
+        EventManager.Instence.on(DataConstant.EVENT_GAME_PROPS_USE, this._callbackUseProps, this);
     }
 
     private registerDrawLineTouchEndCallback() {
-        EventManager.Instence.on(DataConstant.EVENT_TOUCH_LINE_END, () => {
+        this._calbackTouchLineEnd = () => {
             console.log("触发了结束事件");
             this.destroyPzObject();
-        });
+        };
+        EventManager.Instence.on(DataConstant.EVENT_TOUCH_LINE_END, this._calbackTouchLineEnd, this);
     }
 
     //重置按下数据
     private registerDrawLineTouchStartCallback() {
-        EventManager.Instence.on(DataConstant.EVENT_TOUCH_LINE_START, () => {
+        this._callbackTouchLineStart = () => {
             this.createPzTotal = CreatePzUtil.Instence.createPzTotalCount;
             console.log("总共还有: " + this.createPzTotal + "个瓶子");
             this.resetData();
             console.log("总共还有: ", this.colliderObject, "个碰撞缓存");
-        }, this);
+        };
+        EventManager.Instence.on(DataConstant.EVENT_TOUCH_LINE_START, this._callbackTouchLineStart, this);
     }
 
     //监听碰撞
     private registerColliderCallback() {
-        EventManager.Instence.on(DataConstant.EVENT_TOUCH_BEGIN_CONTACT,
-            (otherCollider: Collider2D) => {
-                console.log("game检测到碰撞: ", otherCollider.node.name, otherCollider.tag, otherCollider.node.uuid);
-                if (-1 == this.firstColliderObject) {
-                    //记录 
-                    console.log("第一次碰撞");
+        this._callbackTouchBeginContact = (otherCollider: Collider2D) => {
+            console.log("game检测到碰撞: ", otherCollider.node.name, otherCollider.tag, otherCollider.node.uuid);
+            if (-1 == this.firstColliderObject) {
+                //记录 
+                console.log("第一次碰撞");
 
-                    this.firstColliderObject = otherCollider.tag;
-                    this.recordTouchColliderNode(otherCollider);
-                } else {
-                    if (this.colliderObjectUUID != null) {
-                        const hasCollider = this.colliderObjectUUID.find((item) => {
-                            return item == otherCollider.node.uuid;
-                        })
-                        if (hasCollider) {
-                            console.log("找到了: 已经碰撞过了", hasCollider);
-                        } else {
-                            if (this.firstColliderObject == otherCollider.tag) {
-                                this.recordTouchColliderNode(otherCollider);
-                            } else {
-                                console.log("碰撞失败");
-                                this.resetData();
-                                EventManager.Instence.emit(DataConstant.EVENT_BEGIN_CONTACT_FAIL);
-                            }
-                        }
+                this.firstColliderObject = otherCollider.tag;
+                this.recordTouchColliderNode(otherCollider);
+            } else {
+                if (this.colliderObjectUUID != null) {
+                    const hasCollider = this.colliderObjectUUID.find((item) => {
+                        return item == otherCollider.node.uuid;
+                    })
+                    if (hasCollider) {
+                        console.log("找到了: 已经碰撞过了", hasCollider);
                     } else {
-                        console.log(" this.colliderObjectUUID = null");
-
+                        if (this.firstColliderObject == otherCollider.tag) {
+                            this.recordTouchColliderNode(otherCollider);
+                        } else {
+                            console.log("碰撞失败");
+                            this.resetData();
+                            EventManager.Instence.emit(DataConstant.EVENT_BEGIN_CONTACT_FAIL);
+                        }
                     }
+                } else {
+                    console.log(" this.colliderObjectUUID = null");
+
                 }
-            }, this);
+            }
+        }
+        EventManager.Instence.on(DataConstant.EVENT_TOUCH_BEGIN_CONTACT,
+            this._callbackTouchBeginContact, this);
     }
 
     private destroyPzObject() {
@@ -209,6 +225,8 @@ export class Game extends RenderManager {
 
 
     private initPz(refresh: boolean = false) {
+        console.log("init data: ", this, this._countDownLabel, this.gamePanel, this.gameRewardPanel, this.gameLevel);
+
         if (this._countDownLabel != null) {
             if (!this._countDownLabel.node.active) {
                 this._countDownLabel.node.active = true;
@@ -217,8 +235,12 @@ export class Game extends RenderManager {
         if (!refresh) {
             this._countDownLabel.restart();
         }
-        this.gamePanel.active = true;
-        this.gameRewardPanel.active = false;
+        if (this.gamePanel != null) {
+            this.gamePanel.active = true;
+        }
+        if (this.gameRewardPanel != null) {
+            this.gameRewardPanel.active = false;
+        }
         EventManager.Instence.emit(DataConstant.EVENT_RESET_GAME_NODE);
         this.createPzTotal = 0;
         CreatePzUtil.Instence.resetCreatePzTotal = 0;

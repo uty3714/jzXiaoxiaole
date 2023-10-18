@@ -15,6 +15,8 @@ export class StartGame extends RenderManager {
     private _topCoinsScript: PbMainTopNode = null;
     private _topHealthScript: PbMainTopNode = null;
 
+    private _addHealthCallback: () => void;
+
     protected onLoad(): void {
         super.onLoad();
         console.log("start game onLoad");
@@ -38,11 +40,9 @@ export class StartGame extends RenderManager {
             console.log("差值: " + time);
             const times = Math.floor((time / 1000) / DataConstant.TIMER_TASK_SCHEDULE);
             console.log("次数: " + Math.floor(times));
-            if (times > 0) {
-                const currentHealth = GameManager.Instence.addMoreUserHealth(times);
-                if (currentHealth < DataConstant.GAME_HEALTH_COUNT) {
-                    this.startTimerTask();
-                }
+            const currentHealth = GameManager.Instence.addMoreUserHealth(times);
+            if (currentHealth < DataConstant.GAME_HEALTH_COUNT) {
+                this.startTimerTask();
             }
         } else {
             if (GameManager.Instence.isTimerStart) {
@@ -56,9 +56,15 @@ export class StartGame extends RenderManager {
     private startTimerTask() {
         GameManager.Instence.userEnergyTime = Date.now();
         GameManager.Instence.isTimerStart = true;
-        this.schedule(() => {
-            GameManager.Instence.addUserHealth();
-        }, DataConstant.TIMER_TASK_SCHEDULE);
+        this._addHealthCallback = function () {
+            const currentHealth = GameManager.Instence.addUserHealth();
+            if (currentHealth >= DataConstant.GAME_HEALTH_COUNT) {
+                //停止...
+                console.log("停止恢复体力");
+                this.unschedule(this._addHealthCallback);
+            }
+        }
+        this.schedule(this._addHealthCallback, DataConstant.TIMER_TASK_SCHEDULE);
     }
 
 

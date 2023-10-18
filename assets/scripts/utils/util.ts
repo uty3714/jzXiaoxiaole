@@ -4,6 +4,10 @@ const { ccclass, property } = _decorator;
 @ccclass("util")
 export class util {
 
+    public static createHealthJson(health: number): string {
+        return "{\"day\":" + Date.now() + ",\"health\": " + health + "}";
+    }
+
     public static secToTime(s: number, isCn?: any, _obj?: any) {
         var obj = _obj || {};
         var t;
@@ -61,5 +65,38 @@ export class util {
         } else {
             return '';
         }
+    }
+
+
+    /**
+     * 判断是否是新的一天
+     * @param {Object|Number} dateValue 时间对象 todo MessageCenter 与 pve 相关的时间存储建议改为 Date 类型
+     * @returns {boolean}
+     */
+    public static isNewDay(dateValue: any) {
+
+        var oldDate = new Date(dateValue);
+        var curDate = new Date();
+
+        var oldYear = oldDate.getFullYear();
+        var oldMonth = oldDate.getMonth();
+        var oldDay = oldDate.getDate();
+        var curYear = curDate.getFullYear();
+        var curMonth = curDate.getMonth();
+        var curDay = curDate.getDate();
+
+        if (curYear > oldYear) {
+            return true;
+        } else {
+            if (curMonth > oldMonth) {
+                return true;
+            } else {
+                if (curDay > oldDay) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

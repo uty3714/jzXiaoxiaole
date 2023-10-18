@@ -2,29 +2,63 @@ import { sys } from "cc";
 import Singleton from './Singleton';
 import EventManager from "../utils/EventManager";
 import DataConstant from "../utils/DataConstant";
+import { util } from "../utils/util";
 
 export default class GameManager extends Singleton {
 
     static get Instence() {
         return super.getInstance<GameManager>();
     }
+
+
     private _energyTime: number = -1;
     //用户的金币
     private _userCoins: number = 0;
     //用户的体力
-    private _userHealth: number = 3;
+    private _userHealth: number = 8;
     //用户当前的关卡
     private _userCurrentLevel: number = 1;
 
     private _isTimerStart: boolean = false;
 
     private _propsTips: number = 0;
-    private _propDestroyNode: number = 5;
+    private _propDestroyNode: number = 0;
     private _propRandomNode: number = 5;
     private _propAddTime: number = 5;
 
     init() {
+        const localHealth = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_GAME_HEALTH);
+        console.log("localHealth = " + localHealth);
 
+        if (localHealth == undefined || localHealth == null) {
+            this.saveNewHealth();
+        } else {
+            let saveData = JSON.parse(localHealth);
+            const isNewDay = util.isNewDay(saveData.day);
+            console.log("isNewDay:", "today", isNewDay);
+            if (isNewDay) {
+                console.log("是新的一天");
+                this.saveNewHealth();
+            } else {
+                console.log("不是新的一天，用老的数据");
+                this._userHealth = saveData.health;
+            }
+        }
+
+        //取金币
+        const localCoins = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_GAME_COIN);
+        if (localCoins == undefined || localCoins == null) {
+            this._userCoins = DataConstant.GAME_COIN_COUNT;
+            sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_GAME_COIN, this._userCoins.toString());
+        } else {
+            this._userCoins = Number(localCoins);
+        }
+    }
+
+    private saveNewHealth() {
+        const saveData = util.createHealthJson(DataConstant.GAME_HEALTH_COUNT);
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_GAME_HEALTH, saveData);
+        this._userHealth = DataConstant.GAME_HEALTH_COUNT;
     }
 
     get propTipsNumber() {
@@ -164,9 +198,12 @@ export default class GameManager extends Singleton {
         return this._userHealth > 0;
     }
 
-    addUserHealth() {
+    addUserHealth(): number {
         this._userHealth++;
         this.render();
+        const saveData = util.createHealthJson(this._userHealth);
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_GAME_HEALTH, saveData);
+        return this._userHealth;
     }
 
     addMoreUserHealth(value: number): number {
@@ -175,12 +212,15 @@ export default class GameManager extends Singleton {
             this._isTimerStart = false;
         }
         this.render();
+        const saveData = util.createHealthJson(this._userHealth);
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_GAME_HEALTH, saveData);
         return this._userHealth;
     }
 
     addUserCoins(value: number) {
         this._userCoins += value;
         this.render();
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_GAME_COIN, this._userCoins.toString());
     }
 
     subUserHealth() {
@@ -188,6 +228,8 @@ export default class GameManager extends Singleton {
         if (this._userHealth < 0) {
             this._userHealth = 0;
         }
+        const saveData = util.createHealthJson(this._userHealth);
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_GAME_HEALTH, saveData);
         this.render();
     }
 
@@ -197,6 +239,7 @@ export default class GameManager extends Singleton {
             this._userCoins = 0;
         }
         this.render();
+        sys.localStorage.setItem(DataConstant.LOCAL_STORAGE_KEY_GAME_COIN, this._userCoins.toString());
     }
 
     render() {

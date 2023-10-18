@@ -51,7 +51,6 @@ export class GameProps extends RenderManager {
     }
 
     propsClick() {
-        console.log("当前", this.propsType, "点击");
         if (this._propsCount > 0) {
             switch (this._propsCount) {
                 case 1:

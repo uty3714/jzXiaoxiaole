@@ -11,10 +11,11 @@ export class PbBanNode extends RenderManager {
     @property(Node) leftNode: Node = null!;
     @property(Node) rightNode: Node = null!;
 
+    private _callback: Function = null;
 
     protected onLoad(): void {
         super.onLoad();
-        EventManager.Instence.on(DataConstant.EVENT_RESET_GAME_NODE, () => {
+        this._callback = () => {
             console.log("重置prefab 节点， removeAll");
 
             if (this.middleNode != null) {
@@ -26,15 +27,14 @@ export class PbBanNode extends RenderManager {
             if (this.rightNode != null) {
                 this.rightNode.removeAllChildren();
             }
-        }, this);
+        };
+        EventManager.Instence.on(DataConstant.EVENT_RESET_GAME_NODE, this._callback, this);
 
     }
 
     protected onDestroy(): void {
         super.onDestroy();
-        EventManager.Instence.off(DataConstant.EVENT_RESET_GAME_NODE, () => {
-
-        }, this);
+        EventManager.Instence.off(DataConstant.EVENT_RESET_GAME_NODE, this._callback, this);
     }
 
     render(): void {
