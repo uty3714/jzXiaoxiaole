@@ -1748,7 +1748,7 @@
     "propertyPath": [
       "levelNum"
     ],
-    "value": 2
+    "value": 3
   },
   {
     "__type__": "cc.TargetInfo",

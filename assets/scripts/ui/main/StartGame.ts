@@ -115,7 +115,7 @@ export class StartGame extends RenderManager {
             //
             let passLevel = sys.localStorage.getItem(DataConstant.LOCAL_STORAGE_KEY_USER_PASS_LEVEL);
             if (passLevel == undefined || passLevel == null || passLevel == "") {
-                passLevel = "1";
+                passLevel = "0";
             }
             let directorLevel = Number(passLevel) + 1;
             if (directorLevel > 3) {
