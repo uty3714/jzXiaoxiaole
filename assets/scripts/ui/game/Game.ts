@@ -19,8 +19,9 @@ export class Game extends RenderManager {
     @property(Node) topCoinsNode: Node = null!;
     @property(Node) topHealthNode: Node = null!;
     @property(Node) countDownNode: Node = null!;
-    @property(AudioSource) audioSource: AudioSource = null!;
     @property(CCInteger) gameLevel: number = 1;
+
+    private audioSource: AudioSource = null!;
 
     private _countDownLabel: CountdownNode = null;
     //第一关
@@ -35,7 +36,6 @@ export class Game extends RenderManager {
     private _banMiddleBottomNode: Node = null;
     private _banRightBottomNode: Node = null;
     private _banLeftBottomNode: Node = null;
-
 
     private _topCoinsScript: PbMainTopNode = null;
     private _topHealthScript: PbMainTopNode = null;
@@ -62,6 +62,10 @@ export class Game extends RenderManager {
         const userHealth = GameManager.Instence.userHealth;
         this._topCoinsScript.updateText(userCoins + "");
         this._topHealthScript.updateText(userHealth + "");
+
+        //道具也刷新
+
+
     }
 
     protected onLoad(): void {

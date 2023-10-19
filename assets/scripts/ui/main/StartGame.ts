@@ -1,9 +1,10 @@
-import { _decorator, AudioSource, director, Game, instantiate, Label, Node, Prefab, sys } from 'cc';
+import { _decorator, AudioSource, director, Game, instantiate, Label, log, Node, Prefab, sys, WebView } from 'cc';
 import DataConstant from '../../utils/DataConstant';
 import { RenderManager } from '../../base/RenderManager';
 import GameManager from '../../base/GameManager';
-import { PbMainTopNode } from '../PbMainTopNode';
 import EventManager from '../../utils/EventManager';
+import { NetUtil } from '../../utils/NetUtil';
+import { PbMainTopNode } from '../PbMainTopNode';
 const { ccclass, property } = _decorator;
 
 @ccclass('StartGame')
@@ -13,13 +14,14 @@ export class StartGame extends RenderManager {
     @property(Node) topCoinsNode: Node = null!;
     @property(Node) topHealthNode: Node = null!;
 
-    @property(AudioSource) audioSource: AudioSource = null!;
+    private audioSource: AudioSource = null!;
 
     private _topCoinsScript: PbMainTopNode = null;
     private _topHealthScript: PbMainTopNode = null;
 
     private _addHealthCallback: Function = null;
     private _audioValueChangeCallback: Function = null;
+
     protected onLoad(): void {
         super.onLoad();
         console.log("start game onLoad");
@@ -28,6 +30,7 @@ export class StartGame extends RenderManager {
         this.audioSource.volume = GameManager.Instence.getCurrentAudioValue();
         this._topCoinsScript = this.topCoinsNode.getComponent(PbMainTopNode);
         this._topHealthScript = this.topHealthNode.getComponent(PbMainTopNode);
+        console.log("topCoinsNode ", this.topCoinsNode, ",topHealthNode ", this.topHealthNode);
         console.log("_topCoinsScript ", this._topCoinsScript, ",_topHealthScript ", this._topHealthScript);
 
         this.updateUserCoinsHealth();
@@ -37,6 +40,9 @@ export class StartGame extends RenderManager {
             this.updateUserEnergyTime();
         }
         this.registerAudioValueChangeCallback();
+
+
+        // this.reqCoreData();
     }
 
     private registerAudioValueChangeCallback() {
@@ -136,7 +142,6 @@ export class StartGame extends RenderManager {
             }
         } else {
             console.log("体力不足");
-
         }
     }
 

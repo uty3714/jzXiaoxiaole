@@ -16,6 +16,8 @@ export class GameProps extends RenderManager {
 
     protected onLoad(): void {
         super.onLoad();
+        console.log("load props: " + this.propsType);
+
         switch (this.propsType) {
             case 1:
                 this._propsCount = GameManager.Instence.propTipsNumber;
@@ -52,7 +54,7 @@ export class GameProps extends RenderManager {
 
     propsClick() {
         if (this._propsCount > 0) {
-            switch (this._propsCount) {
+            switch (this.propsType) {
                 case 1:
                     GameManager.Instence.subMorePropTips(1);
                     break;
